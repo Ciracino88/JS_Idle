@@ -8,17 +8,11 @@
 <body>
     <link rel="stylesheet" href="style.css">
     <div class="top_nav">
-        <div>0</div>
+        <div id="gold">0</div>
         <div>10/10</div>
     </div>
     <canvas id="cvs"></canvas>
     <div class="bottom_nav">
-        <button onclick="spawn_minion(1)">
-            <img src="img/minion1.png">
-        </button>
-        <button onclick="spawn_minion(2)">
-            <img src="img/minion2.png">
-        </button>
     </div>
     <script>
         const cvs = document.getElementById('cvs');
@@ -28,7 +22,12 @@
         var img_list = [
             "img/gold.png",
             "img/minion1.png",
-            "img/minion2.png"
+            "img/minion2.png",
+            "img/minion3.png",
+            "img/minion4.png",
+            "img/minion5.png",
+            "img/minion6.png",
+            "img/minion7.png",
         ];
         var direction_list = [
             [0, 1],
@@ -42,29 +41,31 @@
             [-1, 1]
         ]
 
-        var gold = 0;
+        var gold = 50;
         var max_minion = 10;
 
         class Minion {
             constructor(l) {
-                this.x = cvs.width / 2;
-                this.y = cvs.height / 2;
+                this.x = 100;
+                this.y = 100;
                 this.level = l;
                 this.is_move = false;
                 this.is_cool = false;
                 this.timer = 0;
                 this.coolt = 180;
-                this.xspeed = 0.2 * l;
-                this.yspeed = 0.2 * l;
+                this.xspeed = l;
+                this.yspeed = l;
                 this.cost = 50 * l;
                 this.img = new Image();
             }
             draw() {
-                this.img.src = img_list[l];
-                ctx.drawImage(this.img, 0, 0);
+                this.img.src = img_list[this.level];
+                ctx.drawImage(this.img, this.x, this.y, 20, 20);
             }
         }
 
+        init_spawn_button();
+        
         function update() {
             requestAnimationFrame(update);
 
@@ -73,11 +74,14 @@
             draw_all_minion();
         }
 
+        update();
+
         function spawn_minion(i) {
             c = 50 * i
             if (check_can_buy(c)) {
                 m = new Minion(i);
                 gold -= m.cost;
+                update_gold_text();
                 minion_list.push(m);
             } else {
                 console.log('골드가 부족합니다');
@@ -104,6 +108,7 @@
             if (mi.is_move) {
                 // 이동 시간이 남았는지 체크
                 if (mi.timer == 0) {
+                    console.log("휴식 시작");
                     mi.is_move = false;
                     mi.is_cool = true;
                 } else {
@@ -122,8 +127,8 @@
                 } else {
                     // 초기화 작업
                     mi.coolt = 180;
-                    mi.xspeed = mi.level * 0.2;
-                    mi.yspeed = mi.level * 0.2;
+                    mi.xspeed = mi.level;
+                    mi.yspeed = mi.level;
 
                     // 랜덤값 설정
                     rt = Math.floor(Math.random() * (5 - 2) + 2);
@@ -145,12 +150,36 @@
         }
 
         function get_gold(t) {
-            g = t.level + Math.floor(level / 3) * 10 + Math.floor(level / 5) * 30;
+            g = t.level + Math.floor(t.level / 3) * 10 + Math.floor(t.level / 5) * 30;
             gold += g;
+            update_gold_text();
         }
 
         function get_exp(i) {
 
+        }
+
+        function update_gold_text() {
+            g = document.getElementById('gold');
+            g.textContent = gold.toString();
+        }
+
+        function is_locked() {
+            // 해당 미니언이 해금 상태인지를 체크
+
+        }
+
+        function init_spawn_button() {
+            for (let i = 1; i < img_list.length; i++) {
+                bn = document.querySelector('.bottom_nav');
+                sb = document.createElement('button');
+                sb.onclick = spawn_minion(i);
+                sbimg = document.createElement('img');
+                sbimg.src = img_list[i];
+                sbimg.className = "minion_img";
+                sb.appendChild(sbimg);
+                bn.appendChild(sb);
+            }
         }
     </script>
 </body>
