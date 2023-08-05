@@ -8,7 +8,7 @@
 <body>
     <link rel="stylesheet" href="style.css">
     <div class="top_nav">
-        <div id="gold">0</div>
+        <div id="gold">50</div>
         <div>10/10</div>
     </div>
     <canvas id="cvs"></canvas>
@@ -41,26 +41,41 @@
             [-1, 1]
         ]
 
+        const minion_info_list = [
+            [],
+            ['파란달팽이', '어디서나 볼 수 있는 파란달팽이.'],
+            ['빨간달팽이', '이제 막 막내생활 탈출한 빨간달팽이.'],
+            ['버블링', '평민 취급 받는 버블링.'],
+            ['아이스 골렘', '골드를 열심히 버는 아이스 골렘.'],
+            ['알리샤르', '골드를 잘 버는 알리샤르.'],
+            ['라츠', '골드 벌기가 귀찮은 라츠.'],
+            ['???', '황족 ???.']
+        ]
+
         var gold = 50;
         var max_minion = 10;
+        var hover_minion_id = 0;
 
         class Minion {
             constructor(l) {
                 this.x = 100;
                 this.y = 100;
                 this.level = l;
+                this.exp = 0;
                 this.is_move = false;
                 this.is_cool = false;
                 this.timer = 0;
                 this.coolt = 180;
-                this.xspeed = l;
-                this.yspeed = l;
-                this.cost = 50 * l;
+                this.xspeed = l * 0.1;
+                this.yspeed = l * 0.1;
+                this.cost = (l ** 2) * 600;
                 this.img = new Image();
             }
             draw() {
                 this.img.src = img_list[this.level];
                 ctx.drawImage(this.img, this.x, this.y, 20, 20);
+                ctx.fillText(`${this.exp}`, this.x, this.y - 2);
+                ctx.fillText(`lv.${this.level}`, this.x, this.y - 12);
             }
         }
 
@@ -76,7 +91,9 @@
 
         update();
 
-        function spawn_minion(i) {
+        function spawn_minion(e) {
+            t = e.target;
+            i = Number(t.id);
             c = 50 * i
             if (check_can_buy(c)) {
                 m = new Minion(i);
@@ -108,36 +125,41 @@
             if (mi.is_move) {
                 // 이동 시간이 남았는지 체크
                 if (mi.timer == 0) {
-                    console.log("휴식 시작");
                     mi.is_move = false;
                     mi.is_cool = true;
                 } else {
+                    if (mi.x + mi.xspeed + 20 > cvs.width || mi.x + mi.xspeed < 0) {
+                        mi.xspeed *= -1;
+                    }
+
+                    else if (mi.y + mi.yspeed + 20 > cvs.height || mi.y + mi.yspeed < 0) {
+                        mi.yspeed *= -1;
+                    }
+
                     mi.x += mi.xspeed;
                     mi.y += mi.yspeed;
                     get_gold(mi);
+                    get_exp(mi);
                     mi.timer -= 1;
                 }
             } else {
                 if (mi.is_cool) {
                     mi.coolt -= 1;
                     if (mi.coolt == 0) {
-                        console.log("휴식 완료");
                         mi.is_cool = false;
                     }
                 } else {
                     // 초기화 작업
                     mi.coolt = 180;
-                    mi.xspeed = mi.level;
-                    mi.yspeed = mi.level;
+                    mi.xspeed = mi.level * 0.1;
+                    mi.yspeed = mi.level * 0.1;
 
                     // 랜덤값 설정
-                    rt = Math.floor(Math.random() * (5 - 2) + 2);
+                    rt = Math.floor(Math.random() * (50 - 20) + 20);
                     dlst = setting_direction();
                     mi.xspeed *= dlst[0];
                     mi.yspeed *= dlst[1];
                     mi.timer = rt;
-
-                    console.log(mi.xspeed, mi.yspeed, mi.timer);
 
                     mi.is_move = true;
                 }
@@ -151,17 +173,24 @@
 
         function get_gold(t) {
             g = t.level + Math.floor(t.level / 3) * 10 + Math.floor(t.level / 5) * 30;
-            gold += g;
+            gold += g/10;
             update_gold_text();
         }
 
-        function get_exp(i) {
+        function get_exp(t) {
+            // 레벨의 제곱값 * 10 * (초당 60 프레임)
+            rq_xp = (t.level ** 2) * 10 * 60;
+            t.exp += 1;
 
+            if (t.exp >= rq_xp) {
+                t.level += 1;
+            }
         }
 
         function update_gold_text() {
             g = document.getElementById('gold');
-            g.textContent = gold.toString();
+            fd = Math.floor(gold);
+            g.textContent = fd.toString();
         }
 
         function is_locked() {
@@ -173,13 +202,58 @@
             for (let i = 1; i < img_list.length; i++) {
                 bn = document.querySelector('.bottom_nav');
                 sb = document.createElement('button');
-                sb.onclick = spawn_minion(i);
+                sb.id = i;
+                sb.addEventListener('click', spawn_minion);
                 sbimg = document.createElement('img');
+                sbimg.addEventListener('mouseover', hover_minion_page);
+                sbimg.addEventListener('mouseout', unhover_minion_page);
                 sbimg.src = img_list[i];
+                sbimg.id = i;
                 sbimg.className = "minion_img";
                 sb.appendChild(sbimg);
                 bn.appendChild(sb);
             }
+        }
+
+        function hover_minion_page(e) {
+            tid = document.getElementById(e.target.id);
+            hover_minion_id = Number(e.target.id);
+            timg = document.querySelector('.minion_img');
+            tp = tid.parentNode;
+            mp = document.createElement('div');
+            mp.className = 'minion_page';
+
+            // 미니언 이미지
+            mpimg = document.createElement('img');
+            mpimg.src = img_list[hover_minion_id];
+            mpimg.className = 'minion_page_img';
+            mp.appendChild(mpimg);
+
+            // p 커버 생성
+            mpp_cover = document.createElement('div');
+            mpp_cover.className = 'minion_page_p_cover';
+            mp.appendChild(mpp_cover);
+
+            // 미니언 상세 정보
+            for (let i = 0; i < 2; i++) {
+                target_minion_info_list = minion_info_list[hover_minion_id];
+                mpp = document.createElement('p');
+                mpp.innerText = target_minion_info_list[i];
+                mpp_cover.appendChild(mpp);
+            }
+
+            mpg = document.createElement('p');
+            a = (hover_minion_id ** 2) * 600;
+            mpg.innerText = `${a} Gold` ;
+            mpp_cover.appendChild(mpg);
+
+            tp.appendChild(mp);
+        }
+
+        function unhover_minion_page(e) {
+            t = document.querySelector('.minion_page');
+            tp = t.parentNode;
+            tp.removeChild(t);
         }
     </script>
 </body>
