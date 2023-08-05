@@ -8,8 +8,9 @@
 <body>
     <link rel="stylesheet" href="style.css">
     <div class="top_nav">
-        <div id="gold">50</div>
-        <div>10/10</div>
+        <div id="gold">골드 600</div>
+        <div id="sum_minion_level">합계 레벨 0</div>
+        <div id="max_minion">최대 미니언 수 10/10</div>
     </div>
     <canvas id="cvs"></canvas>
     <div class="bottom_nav">
@@ -42,7 +43,7 @@
         ]
 
         const minion_info_list = [
-            [],
+            ['???', '해당 미니언은 아직 해금되어 있지 않습니다.'],
             ['파란달팽이', '어디서나 볼 수 있는 파란달팽이.'],
             ['빨간달팽이', '이제 막 막내생활 탈출한 빨간달팽이.'],
             ['버블링', '평민 취급 받는 버블링.'],
@@ -52,8 +53,9 @@
             ['???', '황족 ???.']
         ]
 
-        var gold = 50;
-        var max_minion = 10;
+        var gold = 600;
+        var max_minion = 2;
+        var sum_minion_level = 0;
         var hover_minion_id = 0;
 
         class Minion {
@@ -94,20 +96,24 @@
         function spawn_minion(e) {
             t = e.target;
             i = Number(t.id);
-            c = 50 * i
-            if (check_can_buy(c)) {
+            if (check_can_buy(i)) {
                 m = new Minion(i);
                 gold -= m.cost;
                 update_gold_text();
                 minion_list.push(m);
+                sum_minion_level += 1;
+                update_sum_minion_level_text();
             } else {
                 console.log('골드가 부족합니다');
             }
         }
 
-        function check_can_buy(cst) {
-            if (gold >= cst) {
-                return true;
+        function check_can_buy(n) {
+            c = (n ** 2) * 600;
+            if (gold >= c) {
+                if (is_locked(n)) {
+                    return true;
+                }
             } else { 
                 return false;
             }
@@ -184,18 +190,35 @@
 
             if (t.exp >= rq_xp) {
                 t.level += 1;
+                sum_minion_level += 1;
+                update_sum_minion_level_text();
             }
         }
 
         function update_gold_text() {
             g = document.getElementById('gold');
-            fd = Math.floor(gold);
-            g.textContent = fd.toString();
+            fd = (Math.floor(gold)).toString();
+            g.textContent = `골드 ${fd}`;
         }
 
-        function is_locked() {
-            // 해당 미니언이 해금 상태인지를 체크
+        function update_sum_minion_level_text() {
+            sml = document.getElementById('sum_minion_level');
+            sml.textContent = `합계 레벨 ${sum_minion_level}`;
+        }
 
+        function update_max_minion_text() {
+            mm = document.getElementById('max_minion');
+            mm.textContent = `합계 레벨 ${minion_list.length}/${max_minion}`;
+        }
+
+        function is_locked(target_id) {
+            // 타겟의 해금 조건
+            unlock_level = (target_id - 1) + Math.floor(target_id / 2) + (Math.floor(target_id / 3) * 2) + (Math.floor(target_id / 5) * 3);
+            if (sum_minion_level >= unlock_level) {
+                return true;
+            } else {
+                return false;
+            }
         }
 
         function init_spawn_button() {
@@ -235,17 +258,31 @@
             mp.appendChild(mpp_cover);
 
             // 미니언 상세 정보
-            for (let i = 0; i < 2; i++) {
-                target_minion_info_list = minion_info_list[hover_minion_id];
-                mpp = document.createElement('p');
-                mpp.innerText = target_minion_info_list[i];
-                mpp_cover.appendChild(mpp);
-            }
+            if (is_locked(hover_minion_id)) {
+                for (let i = 0; i < 2; i++) {
+                    target_minion_info_list = minion_info_list[hover_minion_id];
+                    mpp = document.createElement('p');
+                    mpp.innerText = target_minion_info_list[i];
+                    mpp_cover.appendChild(mpp);
+                }
 
-            mpg = document.createElement('p');
-            a = (hover_minion_id ** 2) * 600;
-            mpg.innerText = `${a} Gold` ;
-            mpp_cover.appendChild(mpg);
+                mpg = document.createElement('p');
+                a = (hover_minion_id ** 2) * 600;
+                mpg.innerText = `${a} Gold` ;
+                mpp_cover.appendChild(mpg);
+            } else if (!is_locked(hover_minion_id)) {
+                for (let i = 0; i < 2; i++) {
+                    target_minion_info_list = minion_info_list[0];
+                    mpp = document.createElement('p');
+                    mpp.innerText = target_minion_info_list[i];
+                    mpp_cover.appendChild(mpp);
+                }
+
+                mpg = document.createElement('p');
+                unlock_level = (hover_minion_id - 1) + Math.floor(hover_minion_id / 2) + (Math.floor(hover_minion_id / 3) * 2) + (Math.floor(hover_minion_id / 5) * 3); // 해금 조건
+                mpg.innerText = `해당 미니언은 합계 레벨 ${unlock_level} 에서 해금됩니다.` ;
+                mpp_cover.appendChild(mpg);
+            }
 
             tp.appendChild(mp);
         }

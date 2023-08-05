@@ -13,6 +13,16 @@
 .top_nav {
     border: 1px solid black;
     margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+#gold {
+    margin-left: 5px;
+}
+
+#max_minion {
+    margin-right: 5px;
 }
 
 .bottom_nav > button {
