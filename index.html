@@ -7,6 +7,25 @@
 </head>
 <body>
     <link rel="stylesheet" href="style.css">
+    <div id="minion_list_page">
+        <div id="minion_list_popup_page">
+            <ul class="minion_list_m">
+                <li class="mlm_img_cover">
+                    <img src="img/minion1.png">
+                </li>
+                <li class="mlm_info_cover">
+                    <p>파란달팽이</p>
+                    <p>레벨 1</p>
+                </li>
+                <li class="mlm_skill_cover">
+                    <img src="img/skill1.png" class="mlms">
+                    <img src="img/skill2.png" class="mlms">
+                    <img src="img/skill3.png" class="mlms">
+                    <img src="img/skill4.png" class="mlms">
+                </li>
+            </ul>
+        </div>
+    </div>
     <div class="top_nav">
         <div id="gold">골드 600</div>
         <div id="sum_minion_level">합계 레벨 0</div>
@@ -18,8 +37,18 @@
     <script>
         const cvs = document.getElementById('cvs');
         const ctx = cvs.getContext('2d');
+        const dpr = window.devicePixelRatio;
+
+        cvs.width = window.innerWidth * dpr;
+        cvs.height = window.innerHeight * dpr;
 
         var minion_list = [];
+        var skill_img_list = [
+            "img/skill1.png",
+            "img/skill2.png",
+            "img/skill3.png",
+            "img/skill4.png",
+        ]
         var img_list = [
             "img/gold.png",
             "img/minion1.png",
@@ -75,7 +104,7 @@
             }
             draw() {
                 this.img.src = img_list[this.level];
-                ctx.drawImage(this.img, this.x, this.y, 20, 20);
+                ctx.drawImage(this.img, this.x, this.y);
                 ctx.fillText(`${this.exp}`, this.x, this.y - 2);
                 ctx.fillText(`lv.${this.level}`, this.x, this.y - 12);
             }
